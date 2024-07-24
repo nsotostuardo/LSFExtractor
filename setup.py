@@ -16,6 +16,18 @@ setup(
     package_data={
         'LSFExtractor': ['*.py'],
     },
+    license = "MIT License",
     long_description=description,
-    long_description_content_type="text/markdown"
+    long_description_content_type="text/markdown",
+    classifiers=[
+        "Intended Audience :: Science/Research",
+        "License :: MIT License",
+        "Operating System :: OS Independent"
+        "Development Status :: 4 -Beta",
+        "Topic :: Scientific/Engineering :: Astronomy",
+        
+        "Natural Language :: English",
+        "Programming Language :: Python",
+        "Topic :: Software Development :: Libraries :: Python Modules"
+    ],
     )
