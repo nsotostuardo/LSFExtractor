@@ -25,7 +25,6 @@ setup(
         "Operating System :: OS Independent"
         "Development Status :: 4 -Beta",
         "Topic :: Scientific/Engineering :: Astronomy",
-        
         "Natural Language :: English",
         "Programming Language :: Python",
         "Topic :: Software Development :: Libraries :: Python Modules"

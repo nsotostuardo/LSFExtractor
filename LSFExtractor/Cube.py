@@ -1,6 +1,7 @@
 import scipy
 import numpy as np
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 from .Spectrum import Spectrum
 from astropy.io import fits
@@ -16,7 +17,7 @@ class Cube:
         self.cube_kernel = []
         self.LSF = [0,0,0]
 
-    def give_LSF(self):
+    def get_LSF(self):
         '''Executes the LSF estimation'''
         self.cube_corr_kernel()
         self.LSF_calc()
@@ -32,7 +33,7 @@ class Cube:
         '''Calculates the Kernel for the LSF aproximation'''
         correlation_values = []
         (y, x) = self.imagen.shape[-2:]
-        for y0 in range(0,y):
+        for y0 in tqdm(range(0,y)):
             for x0 in range(0,x):
                 slicer = self.cube_slicer(y0, x0)
                 spectrum = self.imagen.data[slicer]
@@ -63,7 +64,11 @@ class Cube:
             y_shifted = np.interp(self.x0, np.array(self.x0) * self.k_factor, y0)
             y_shifted = list(y_shifted)
 
+            if idx == 0 or idx == 2:
+                y_shifted[0] = 0
             self.LSF[idx] = y_shifted[::-1] + y_shifted[1:]
+            
+        self.LSF[0], self.LSF[1] = self.LSF[1], self.LSF[0]
 
     def cube_slicer(self, y0, x0):
         '''Makes any dim slice '''
@@ -87,9 +92,8 @@ class Cube:
         return (kernel_spectr_corr)
 
     def plot_kernel(self):
-        '''Plots the Kernel estimated '''
+        '''Plots estimated Kernel  '''
         (y_d, y0, y_u) = self.cube_kernel
-
         plt.plot(self.x0, y0, c = 'crimson')
         plt.fill_between(self.x0, np.array(y_d), np.array(y_u) ,
                         alpha = .5, color = 'lightcoral' )
@@ -121,13 +125,19 @@ class Cube:
 
     def save_LSF(self, path_destino, format = '.3f', write = True):
         '''Saves LSF values into a _LSF.dat file'''
-        t = QTable( [np.arange(-self.used_channels + 1, self.used_channels, 1), self.LSF[0], self.LSF[1], self.LSF[2]],
-                   names=('Channels', 'LSF_16', 'LSF_50', 'LSF_84') 
-                   )
-        t['LSF_16'].info.format = format
-        t['LSF_50'].info.format = format
-        t['LSF_84'].info.format = format
-        path_destino += "_LSF.dat"
-        if write:
-            t.write(path_destino, format='ascii.commented_header', overwrite=True)
-        return(t)
+        try:
+            assert self.LSF != [0,0,0], "LSF must be calculated fist with get_LSF method"
+            t = QTable( [np.arange(-self.used_channels + 1, self.used_channels, 1), self.LSF[0], self.LSF[1], self.LSF[2]],
+                    names=('Channels', 'LSF_50', 'LSF_16', 'LSF_84') 
+                    )
+            t['LSF_16'].info.format = format
+            t['LSF_50'].info.format = format
+            t['LSF_84'].info.format = format
+            path_destino += "_LSF.dat"
+            if write:
+                t.write(path_destino, format='ascii.commented_header', overwrite=True)
+            print('saved successfully')
+            return(t)
+
+        except AssertionError as msg:
+            print(msg)
