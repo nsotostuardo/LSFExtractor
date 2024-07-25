@@ -1,2 +1,4 @@
 .venv/
 LSFExtractor.egg-info/
+build/
+dist/

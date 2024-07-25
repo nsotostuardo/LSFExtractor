@@ -1,13 +1,24 @@
 import scipy
 import numpy as np
 import matplotlib.pyplot as plt
+import functools
 
-from .Spectrum import Spectrum
+from tqdm import tqdm
 from astropy.io import fits
 from astropy.table import QTable
 
+from .Spectrum import Spectrum
+
+def trackcalls(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        wrapper.has_been_called = True
+        return func(*args, **kwargs)
+    wrapper.has_been_called = False
+    return wrapper
 
 class Cube:
+
     def __init__(self, path, extension = 0, used_channels = 8) -> None:
         self.hdul = fits.open(path)
         self.imagen = self.hdul[extension]
@@ -16,7 +27,17 @@ class Cube:
         self.cube_kernel = []
         self.LSF = [0,0,0]
 
-    def give_LSF(self):
+    def check_func_called(func):
+        @functools.wraps(func)
+        def wrapper(self, *args, **kwargs):
+            if self.get_LSF.has_been_called:
+                return func(self, *args, **kwargs)
+            else:
+                print("Error: 'get_LSF' must be called before this method can execute.")
+        return wrapper
+
+    @trackcalls
+    def get_LSF(self):
         '''Executes the LSF estimation'''
         self.cube_corr_kernel()
         self.LSF_calc()
@@ -28,11 +49,12 @@ class Cube:
         else:
             return(self.array_check(array[0]))
 
+    @check_func_called
     def cube_corr_kernel(self):
         '''Calculates the Kernel for the LSF aproximation'''
         correlation_values = []
         (y, x) = self.imagen.shape[-2:]
-        for y0 in range(0,y):
+        for y0 in tqdm(range(0,y)):
             for x0 in range(0,x):
                 slicer = self.cube_slicer(y0, x0)
                 spectrum = self.imagen.data[slicer]
@@ -50,7 +72,8 @@ class Cube:
 
         self.cube_kernel = [y_down, y_mean, y_up]
         pass
-        
+    
+    @check_func_called
     def LSF_calc(self):
         '''Estimates the LSF using the Kernel and the k factor'''
         for idx, y0 in enumerate(self.cube_kernel):
@@ -62,8 +85,11 @@ class Cube:
 
             y_shifted = np.interp(self.x0, np.array(self.x0) * self.k_factor, y0)
             y_shifted = list(y_shifted)
-
             self.LSF[idx] = y_shifted[::-1] + y_shifted[1:]
+
+        self.LSF[0], self.LSF[1] = np.array(self.LSF[1]), self.LSF[0]
+        self.LSF[1] = self.distance_error(self.LSF[0], self.LSF[1]) 
+        self.LSF[2] = self.distance_error(self.LSF[0], self.LSF[2]) 
 
     def cube_slicer(self, y0, x0):
         '''Makes any dim slice '''
@@ -86,15 +112,15 @@ class Cube:
         kernel_spectr_corr = spectrum.get_correlation( np.array(kernel[::-1] + kernel[1:]), self.used_channels)
         return (kernel_spectr_corr)
 
+    @check_func_called
     def plot_kernel(self):
-        '''Plots the Kernel estimated '''
+        '''Plots estimated Kernel  '''
         (y_d, y0, y_u) = self.cube_kernel
-
         plt.plot(self.x0, y0, c = 'crimson')
-        plt.fill_between(self.x0, np.array(y_d), np.array(y_u) ,
+        plt.fill_between(self.x0, y_d, y_u ,
                         alpha = .5, color = 'lightcoral' )
         plt.errorbar(self.x0, y0, 
-                    yerr = ( np.array(y0 - y_d), np.array(y0 - y_u) ), 
+                    yerr = ( self.distance_error(y_d, y0) , self.distance_error(y0, y_u)  ), 
                             marker='o', markersize=8, capsize=7,
                             linestyle='none', c='crimson',
                             alpha = 1
@@ -102,7 +128,9 @@ class Cube:
         plt.xlabel('Channels')
         plt.ylabel('Correlation')
         plt.title('Cube Correlation Kernel')
+        plt.show()
 
+    @check_func_called
     def plot_corr_LSF(self):
         plt.plot( self.x0, self.cube_kernel[1],  label = f'kernel')
         plt.plot( np.array(self.x0)*self.k_factor,
@@ -118,16 +146,23 @@ class Cube:
         '''Interpolates x values at y=0.5 using scipy'''
         x_interp = scipy.interpolate.interp1d(y, x)
         return(x_interp(y_interpol))
-
+    
+    @check_func_called
     def save_LSF(self, path_destino, format = '.3f', write = True):
         '''Saves LSF values into a _LSF.dat file'''
         t = QTable( [np.arange(-self.used_channels + 1, self.used_channels, 1), self.LSF[0], self.LSF[1], self.LSF[2]],
-                   names=('Channels', 'LSF_16', 'LSF_50', 'LSF_84') 
-                   )
-        t['LSF_16'].info.format = format
-        t['LSF_50'].info.format = format
-        t['LSF_84'].info.format = format
+                names=('Channels', 'LSF', 'Lower error', 'Upper error') 
+                )
+        t['LSF'].info.format = format
+        t['Lower error'].info.format = format
+        t['Upper error'].info.format = format
         path_destino += "_LSF.dat"
         if write:
             t.write(path_destino, format='ascii.commented_header', overwrite=True)
+        print('saved successfully')
         return(t)
+        
+    def distance_error(self, array_1, array_2):
+        '''Calculate the distance between two arrays'''
+        array_1, array_2 = np.array(array_1), np.array(array_2)
+        return(np.sqrt((array_1 - array_2)**2))
