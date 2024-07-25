@@ -2,22 +2,20 @@
 
 ## Description
 
+This module enables users to extract the Line Spread Function (LSF) from any type of spectral cube. The provided code automatically handles multiple axes in the datacube. 
 
-- Calculate LSF 
-- Currently only ALMA type cubes
-- Cube dimension versativility 
-- developing for more cubes (i.e., MUSE, NIRSpec)
+Currently, the code estimates the LSF only for ALMA data cubes, but we are actively developing support for additional types of cubes.
 
 
 ## Getting Started
-
-### Installing
-
-Releases are registered on PyPI, and development is occurring at the project's [GitHub page](https://github.com/nsotostuardo/LSFExtractor).
-
 To install astropy from PyPI, use:
 
-` pip install [LINK QUE AUN NO EXISTE] `
+` pip install LSFExtractor`
+### Installing
+
+Releases are registered on [PyPI](https://pypi.org/project/LSFExtractor/), and development is occurring at the project's [GitHub page](https://github.com/nsotostuardo/LSFExtractor).
+
+
 
 ### Executing program
 
