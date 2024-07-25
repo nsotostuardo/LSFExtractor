@@ -8,12 +8,14 @@ Currently, the code estimates the LSF only for ALMA data cubes, but we are activ
 
 
 ## Getting Started
-To install astropy from PyPI, use:
+Releases are registered on [PyPI](https://pypi.org/project/LSFExtractor/), and development is occurring at the project's [GitHub page](https://github.com/nsotostuardo/LSFExtractor).
 
-` pip install LSFExtractor`
+
 ### Installing
 
-Releases are registered on [PyPI](https://pypi.org/project/LSFExtractor/), and development is occurring at the project's [GitHub page](https://github.com/nsotostuardo/LSFExtractor).
+To install astropy from PyPI, use:
+
+`pip install LSFExtractor`
 
 
 
