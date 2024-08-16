@@ -10,6 +10,10 @@ from astropy.table import QTable
 from .Spectrum import Spectrum
 
 def trackcalls(func):
+    '''
+       Decorator to set a pseudo-attribute for get_LSF 
+       to check if it has already been called.
+    '''
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         wrapper.has_been_called = True
@@ -28,6 +32,10 @@ class Cube:
         self.LSF = [0,0,0]
 
     def check_func_called(func):
+        ''' 
+            Decorator to validate if get_LSF has been called, 
+            for functions that work with this method's calculations.
+        '''
         @functools.wraps(func)
         def wrapper(self, *args, **kwargs):
             if self.get_LSF.has_been_called:
@@ -44,6 +52,7 @@ class Cube:
         return(self.LSF)
     
     def array_check(self, array):
+        '''retrieves array from a nested array'''
         if len(array) > 1:
             return(array)
         else:

@@ -50,6 +50,22 @@ cube.save_LSF('new_path')
 
 More documentation can be found inside the .py files.
 
+## Correlation Kernel Methodology 
+
+To explain how the correlation kernel is obtained across a datacube, it’s better to start with a single spaxel.
+
+Calculating the correlation of the spectrum with itself results in a value of 1. To retrieve the correlation between nearby channels, the same spectrum is shifted by one channel at a time over a few channels, as shown below.
+
+<img alt="Correlation " src="assets/Correlation.gif"> </img>
+
+Keeping the length of each spectrum consistent, the correlations are computed using the Pearson product-moment correlation from NumPy.
+
+For each spaxel, the same method is used, resulting in correlation kernel distribution from which the 16th, 50th, and 84th percentiles are used for the LSF estimation and its errors.
+
+<div align="center">
+<img alt="Kernel" src="assets/cubekernel.png" width="300" height="300">
+<div align="left">
+
 ## Authors
 
 
@@ -59,15 +75,10 @@ More documentation can be found inside the .py files.
 ## Version History
 
 * 0.1
-    * Initial Release
+    * Beta Release
 
-## License
-
-This project is licensed under a MIT style license - see the LICENSE.md file for details
 
 ## Acknowledgments
-
-Inspiration, code snippets, etc.
 
 * [LSF](https://github.com/jigonzal/LSF)
 * [The Astropy Project](https://github.com/astropy)
