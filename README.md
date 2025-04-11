@@ -50,7 +50,6 @@ cube.save_LSF('new_path')
 ```
 
 More documentation can be found inside the .py files.
-
 ## Correlation Kernel Methodology 
 
 To explain how the correlation kernel is obtained across a datacube, it’s better to start with a single spaxel.
